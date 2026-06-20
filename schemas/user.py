@@ -1,5 +1,5 @@
 from pydantic import BaseModel,EmailStr,field_validator,model_validator,Field
-from typing import List
+from typing import Optional
 from enum import Enum
 from datetime import datetime
 
@@ -38,6 +38,22 @@ class UserResponse(UserBase):
 class UserLogin(BaseModel):
     email:EmailStr
     password:str    
+
+class UserUpdate(BaseModel):
+    email:Optional[EmailStr]=None
+    user_name:Optional[str]=None
+    role_type:Optional[role_type]
+
+    @field_validator("user_name")
+    @classmethod
+    def name_val(cls,v:str)->str:
+        v=v.strip()
+        if " " in v:
+            raise ValueError("space not allowed")
+        return v
+   
+
+        
 
 
 
