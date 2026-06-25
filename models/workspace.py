@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from  models.user import User
+    from models.workspacealloc import Workspacealloc
 
 class Workspace(Base,TimestampMixin):
     __tablename__="workspace"
@@ -14,5 +15,5 @@ class Workspace(Base,TimestampMixin):
     owner_id:Mapped[int]=mapped_column(ForeignKey("users.id"),nullable=False)
     
     owner:Mapped["User"]=relationship(back_populates="workspaces")
-
+    member_alloc:Mapped["Workspacealloc"]=relationship(back_populates="workspaceall")
 
