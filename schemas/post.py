@@ -44,7 +44,7 @@ class PostChildResponse(PostChildBase):
 
 class MegaPostSubmission(BaseModel):
     master:PostMasterCreate
-    target_platfotrm:list[platform_opt]    
+    target_platform:list[platform_opt]    
 
 
   

@@ -1,11 +1,9 @@
 from pydantic import BaseModel,Field
 from typing import List
-from enum import Enum
+from datetime import datetime
+from . import Role_type
 
-class role_type(str,Enum)
-    owner="owner"
-    creator="creator"
-    sub_creator="sub_creator"
+
 
 class WorkBase(BaseModel):
     brand_name:str=Field(min_length=2,max_length=16)
@@ -19,15 +17,16 @@ class WorkBaseCreate(WorkBase):
 class WorkBaseMember(BaseModel):
     user_id:int
     username:str
-    role_type:role_type
+    role_type:Role_type
     can_approve_posts:bool=False
 
 
 class WorkResponse(WorkBase):
     id:int
-    created_at:int
+    created_at:datetime
     owner_id:int
-    require_approval:bool
-    aloocated_members:List[WorkBaseMember]
+    allocated_members:List[WorkBaseMember]
+
+    model_config={"from_attributes":True}
 
           
