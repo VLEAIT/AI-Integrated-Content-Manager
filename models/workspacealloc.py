@@ -13,10 +13,10 @@ class Workspacealloc(Base,TimestampMixin):
 
     id:Mapped[int]=mapped_column(primary_key=True)
     workspace_id:Mapped[int]=mapped_column(ForeignKey("workspace.id", ondelete="CASCADE"),nullable=True)
-    user_id:Mapped[int]=mapped_column(ForeignKey("user.id",ondelete="CASCADE"),nullable=True)
+    user_id:Mapped[int]=mapped_column(ForeignKey("users.id",ondelete="CASCADE"),nullable=True)
     can_approve_posts:Mapped[bool]=mapped_column(default=False,nullable=False)
     can_access_ai:Mapped[bool]=mapped_column(default=False,nullable=False)
 
-    user :Mapped["User"]=relationship(back_populates="workspace_allc")
-    workspaceall:Mapped["Workspace"]=relationship(back_populates="memeber_alloc")
+    user :Mapped["User"]=relationship(back_populates="workspace_alloc")
+    workspaceall:Mapped["Workspace"]=relationship(back_populates="member_alloc")
 
