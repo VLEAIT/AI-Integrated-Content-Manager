@@ -52,20 +52,27 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
-
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Run migrations in 'online' mode."""
+    
+    # 1. Grab the live URL from your .env file just like you did in offline mode
+    url = os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+    
+    # Quick fix: SQLAlchemy doesn't support the raw "postgres://" prefix anymore, it needs "postgresql://"
+    if url and url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+        
+    # 2. Inject that live URL into the config dictionary dynamically
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = url
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
+    # 3. Pass the configuration into the engine creation tool
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-
+    
     with connectable.connect() as connection:
         context.configure(
             connection=connection, target_metadata=target_metadata
