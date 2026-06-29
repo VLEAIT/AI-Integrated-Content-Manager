@@ -1,7 +1,7 @@
 from pydantic import BaseModel,Field
 from typing import List
 from datetime import datetime
-from . import Role_type
+from schemas.user import Role_type
 
 
 
@@ -18,7 +18,6 @@ class WorkBaseMember(BaseModel):
     user_id:int
     username:str
     role_type:Role_type
-    can_approve_posts:bool=False
 
 
 class WorkResponse(WorkBase):

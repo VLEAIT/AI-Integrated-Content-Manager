@@ -1,12 +1,17 @@
 from pydantic import BaseModel,Field,HttpUrl
 from datetime import datetime
 from enum import Enum
-from typing import Literal,Optional
+from typing import Optional
 
 class platform_opt(str,Enum):
     instagram="instagram"
     tiktok="tiktok"
     facebook="facebook"
+
+class status(str,Enum):
+    pending="pending"
+    approved="approved"
+    rejected="rejected"
 
 class PostMasterBase(BaseModel):
     content_url:HttpUrl=Field(... , description="claude storage link")
@@ -33,7 +38,7 @@ class PostChildCreate(PostChildBase):
 class PostChildResponse(PostChildBase):
     id:int
     masterpost_id:int
-    approval_status:Literal["pending","approved","rejected"]="pending"
+    approval_status:status=status.pending
     is_published:bool=False
     boost_budget:float=0.0
     published_at:Optional[datetime]=None

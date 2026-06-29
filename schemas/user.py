@@ -24,7 +24,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password:str=Field(min_length=8,max_length=15)
     conform_passport:str=Field(min_length=8,max_length=15)
-    @model_validator(model="after")
+    @model_validator(mode="after")
     def pass_val(self)->"UserCreate":
         if self.password != self.conform_passport:
             raise ValueError("passport not matched")
