@@ -11,3 +11,11 @@ A high-performance, multi-tenant Content Management System (CMS) engineered to s
 * **Migrations:** Alembic
 * **Authentication:** JWT (JSON Web Tokens) & Bcrypt Password Hashing
 
+## Recent Updates
+* Added authentication support with JWT token creation and validation.
+* Added password hashing and verification using bcrypt.
+* Added user/workspace/workspace allocation models with SQLAlchemy ORM.
+* Added PostgreSQL database connection and session management.
+* Added Alembic support for migrations and schema versioning.
+* Added application initialization in `main.py` to create tables on startup.
+
