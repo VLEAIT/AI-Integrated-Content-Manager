@@ -8,7 +8,8 @@ from fastapi import Depends,HTTPException,status
 from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
-
+from schemas import Role_type
+from models import Workspacealloc
 
 
 
@@ -70,3 +71,17 @@ def get_current_user(token:str=Depends(oauth2_schema),db:Session=Depends(get_db)
       
     return user  
 
+def require_owner(current_user:User=Depends(get_current_user)):
+    if current_user.role_type!=Role_type.owner:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="data not found"
+                            )
+    return get_current_user   
+
+
+def workspace_access(workspace_id:int,current_user:User=Depends(get_current_user),db:Session=Depends(get_db)):
+    allocation=db.query(Workspacealloc).filter(Workspacealloc.user_id==current_user.id,Workspacealloc.workspace_id==workspace_id).first()
+    if not allocation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="value not found")
+    return workspace_id
