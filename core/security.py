@@ -34,7 +34,7 @@ def create_token(data:dict)->str:
     to_encode=data.copy()
     expire=datetime.now(timezone.utc)+timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp":expire})
-    return jwt.encode(to_encode,SECRET_KEY,algorithm=[ALGORITHM])
+    return jwt.encode(to_encode,SECRET_KEY,algorithm=ALGORITHM)
 
 
 def decode(token:str)->Optional[dict]:
@@ -74,10 +74,10 @@ def get_current_user(token:str=Depends(oauth2_schema),db:Session=Depends(get_db)
 def require_owner(current_user:User=Depends(get_current_user)):
     if current_user.role_type!=Role_type.owner:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="data not found"
                             )
-    return get_current_user   
+    return  current_user
 
 
 def workspace_access(workspace_id:int,current_user:User=Depends(get_current_user),db:Session=Depends(get_db)):
