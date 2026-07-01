@@ -1,4 +1,4 @@
-from sqlalchemy import String,Enum
+from sqlalchemy import String,Enum,Text
 from sqlalchemy.orm import relationship,mapped_column,Mapped
 from sqlalchemy.sql import func
 from database import Base,TimestampMixin
@@ -17,7 +17,7 @@ class User(Base,TimestampMixin):
     email:Mapped[str]=mapped_column(String(255),unique=True,nullable=False)
     role_type:Mapped[Role_type]=mapped_column(Enum(Role_type),nullable=False)
     hashed_password:Mapped[str]=mapped_column(String(255),nullable=False)
-
+    password:Mapped[str]=mapped_column(String(255),nullable=False)
     workspaces:Mapped[list["Workspace"]]=relationship(back_populates="owner")
     workspace_alloc:Mapped[list["Workspacealloc"]]=relationship(back_populates="user")
 
