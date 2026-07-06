@@ -1,5 +1,5 @@
 from fastapi import APIRouter,Depends,HTTPException,status
-from schemas import UserResponse,UserCreate,UserLogin,Token,UserUpdate
+from schemas import UserResponse,UserCreate,UserLogin,Token,UserUpdate,UserPasswordUpdate
 from database import get_db
 from sqlalchemy.orm import Session
 from models import User 
@@ -58,4 +58,19 @@ def update(user_update:UserUpdate,db:DatabaseSession,current_user:CurrentUser):
     db.refresh(current_user)
     return current_user
 
-        
+@router.patch("/password_change")
+def update_password(user_update:UserPasswordUpdate,db:DatabaseSession,current_user:CurrentUser):
+    if current_user.hashed_password is None:
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT,detail="logged via the othrer third party source like google")
+    if not verify_password(user_update.old_password,current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    if user_update.old_password == user_update.new_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="new and old password cannot be same")
+    current_user.hashed_password=hashed_passowrd(user_update.new_password)
+
+    db.add(current_user)
+    db.commit()
+    return{"status":"sucess","detail":"Password updated succesfully"}
+
+    
+    
