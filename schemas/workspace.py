@@ -7,7 +7,7 @@ from schemas.user import Role_type
 
 class WorkBase(BaseModel):
     brand_name:str=Field(min_length=2,max_length=16)
-    require_approval:bool=Field(True)
+    require_approval:bool=Field(default=True)
 
 
 class WorkBaseCreate(WorkBase):
@@ -24,7 +24,7 @@ class WorkResponse(WorkBase):
     id:int
     created_at:datetime
     owner_id:int
-    allocated_members:List[WorkBaseMember]
+    allocated_members:List[WorkBaseMember]=[]
 
     model_config={"from_attributes":True}
 
