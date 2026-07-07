@@ -23,10 +23,10 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password:str=Field(min_length=8,max_length=15)
-    conform_password:str=Field(min_length=8,max_length=15)
+    confirm_password:str=Field(min_length=8,max_length=15)
     @model_validator(mode="after")
     def pass_val(self)->"UserCreate":
-        if self.password != self.conform_password:
+        if self.password != self.confirm_password:
             raise ValueError("passport not matched")
         return self
 
@@ -62,5 +62,7 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     user_id:str=Field(default=None)    
 
-
+class UserPasswordUpdate(BaseModel):
+    old_password:str=Field(default=None)
+    new_password:str=Field(default=None)
 
