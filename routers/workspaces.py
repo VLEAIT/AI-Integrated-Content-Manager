@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,HTTPException,status
 from schemas import WorkResponse,WorkBaseCreate,Role_type
 from database import get_db
-from typing import Annotated
+from typing import Annotated,List
 from core import get_current_user
 from sqlalchemy.orm import Session
 from models import User,Workspace,Workspacealloc
@@ -42,3 +42,10 @@ def create(workbase:WorkBaseCreate,db:DatabaseSession,current_user:Current_User)
 
     return db_workspace
     
+
+@router.get("/my_workspace",response_model=list[WorkResponse])
+def get_myworkspace(db:DatabaseSession,current_user:Current_User):
+    workspace=db.query(Workspace).join(Workspacealloc).filter(Workspacealloc.user_id==current_user.id).all()
+    return workspace
+
+
