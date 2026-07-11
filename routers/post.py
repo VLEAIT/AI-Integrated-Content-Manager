@@ -1,4 +1,4 @@
-from fastapi import APIRouter,Depends,status
+from fastapi import APIRouter,Depends,status,BackgroundTasks
 from models import PostChildModel,PostMasterModel
 from schemas import PostChildResponse,PostChildCreate,MegaPostSubmission,statu,PostMasterResponse
 from typing import Annotated
@@ -6,6 +6,7 @@ from core import get_current_user,workspace_access
 from database import get_db
 from sqlalchemy.orm import Session
 from models import User,Workspacealloc
+
 
 
 router=APIRouter(
@@ -17,12 +18,25 @@ DatabaseSession=Annotated[Session,Depends(get_db)]
 CurrentUser=Annotated[User,Depends(get_current_user)]
 access=Annotated[Workspacealloc,Depends(workspace_access)]
 
+def call_claude_api(prompt:str)->str:
+    return f"Ai is generating idea"
+
+def generate_ai_caption(masterpost_id:int):
+    db=next(get_db)
+    post=db.query(PostMasterModel).filter(PostMasterModel.id==masterpost_id).first()
+    ai_text=call_claude_api(prompt=post.raw_description)
+    post.ai_caption=ai_text
+    db.commit()
+
 @router.post("/mega_submit",response_model=PostMasterResponse,status_code=status.HTTP_201_CREATED)
 def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:DatabaseSession,memebership:access,current_user:CurrentUser):
-    db_masterpost=PostMasterModel(**payload.master.model_dump(),workspace_id=Workspace_id,creator_id=current_user.id)
+    
+    db_masterpost=PostMasterModel(**payload.master.model_dump(),workspace_id=Workspace_id,creator_id=current_user.id,ai_caption="Processing via claude")
     db.add(db_masterpost)
     db.commit()
     db.refresh(db_masterpost)
+
+    BackgroundTasks.add_task(generate_ai_caption,db_masterpost.id)
 
 
     for platform in payload.target_platform:
