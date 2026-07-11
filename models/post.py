@@ -2,7 +2,7 @@ from sqlalchemy import ForeignKey,String,Text,Enum,DateTime
 from sqlalchemy.orm import Mapped,mapped_column,relationship        
 from database import Base,TimestampMixin
 from schemas import platform_opt
-from schemas import status
+from schemas import statu
 from datetime import datetime
 from typing import List,Optional
 
@@ -24,7 +24,7 @@ class PostChildModel(Base,TimestampMixin):
     id:Mapped[int]=mapped_column(primary_key=True)
     masterpost_id:Mapped[int]=mapped_column(ForeignKey("post_master.id",ondelete="CASCADE"),nullable=False)
     platform:Mapped[platform_opt]=mapped_column(Enum(platform_opt),nullable=False)
-    approval_status:Mapped[status]=mapped_column(Enum(status),nullable=False)
+    approval_status:Mapped[statu]=mapped_column(Enum(statu),nullable=False)
     is_published:Mapped[bool]=mapped_column(default=False, nullable=False)
     boost_budget:Mapped[float]=mapped_column(default=0.0,nullable=False)
     scheduled_time:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=None)

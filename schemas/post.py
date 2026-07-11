@@ -8,7 +8,7 @@ class platform_opt(str,Enum):
     tiktok="tiktok"
     facebook="facebook"
 
-class status(str,Enum):
+class statu(str,Enum):
     pending="pending"
     approved="approved"
     rejected="rejected"
@@ -38,7 +38,7 @@ class PostChildCreate(PostChildBase):
 class PostChildResponse(PostChildBase):
     id:int
     masterpost_id:int
-    approval_status:status=status.pending
+    approval_status:statu=statu.pending
     is_published:bool=False
     boost_budget:float=0.0
     published_at:Optional[datetime]=None
