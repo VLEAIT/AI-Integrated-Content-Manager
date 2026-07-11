@@ -24,14 +24,19 @@ def call_claude_api(prompt:str)->str:
 def generate_ai_caption(masterpost_id:int):
     db=next(get_db)
     post=db.query(PostMasterModel).filter(PostMasterModel.id==masterpost_id).first()
-    ai_text=call_claude_api(prompt=post.raw_description)
-    post.ai_caption=ai_text
-    db.commit()
+    if post:
+        ai_text=call_claude_api(prompt=post.raw_description)
+        post.ai_caption=ai_text
+        db.commit()
+    
 
+   
 @router.post("/mega_submit",response_model=PostMasterResponse,status_code=status.HTTP_201_CREATED)
 def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:DatabaseSession,memebership:access,current_user:CurrentUser):
-    
-    db_masterpost=PostMasterModel(**payload.master.model_dump(),workspace_id=Workspace_id,creator_id=current_user.id,ai_caption="Processing via claude")
+
+    master_data=payload.master.model_dump()
+    master_data["ai_caption"]="Processing via AI"
+    db_masterpost=PostMasterModel(**master_data,workspace_id=Workspace_id,creator_id=current_user.id)
     db.add(db_masterpost)
     db.commit()
     db.refresh(db_masterpost)
@@ -52,7 +57,7 @@ def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:Database
     db.commit()  
     db.refresh(db_masterpost)  
 
-    return {"message":"Mega Post Created Successfully","master_id":db_masterpost.id}
+    return db_masterpost
 
      
     
