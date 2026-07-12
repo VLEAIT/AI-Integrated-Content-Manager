@@ -1,6 +1,6 @@
-from fastapi import APIRouter,Depends,status,BackgroundTasks
+from fastapi import APIRouter,Depends,status,BackgroundTasks,HTTPException
 from models import PostChildModel,PostMasterModel
-from schemas import PostChildResponse,PostChildCreate,MegaPostSubmission,statu,PostMasterResponse
+from schemas import PostChildResponse,PostChildCreate,MegaPostSubmission,statu,PostMasterResponse,PostApproval
 from typing import Annotated,List
 from core import get_current_user,workspace_access
 from database import get_db
@@ -63,3 +63,16 @@ def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:Database
 def list_workspace_posts(workspace_id:int,db:DatabaseSession,memebership:access,skip:int=0,limit:int=10):
     posts=db.query(PostMasterModel).filter(PostMasterModel.workspace_id==workspace_id).order_by(PostMasterModel.id.desc()).offset(skip).limit(limit).all()
     return posts
+
+
+@router.patch("/child/{child_id}/approval", status_code=status.HTTP_200_OK)
+def postapproval(workspace_id:int,child_id:int,payload:PostApproval,db:DatabaseSession,membership:access):
+    child_post=db.query(PostChildModel).join(PostMasterModel).filter(PostChildModel.id==child_id,PostMasterModel.id==workspace_id).first()
+    if not child_post:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Platform id idnot match ")
+    child_post.approval_status=payload.approval_status
+    db.commit()
+    return {"message": f"Platform post updated to {payload.approval_status.value}"}
+
+
+
