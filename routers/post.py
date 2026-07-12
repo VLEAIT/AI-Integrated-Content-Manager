@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,BackgroundTasks
 from models import PostChildModel,PostMasterModel
 from schemas import PostChildResponse,PostChildCreate,MegaPostSubmission,statu,PostMasterResponse
-from typing import Annotated
+from typing import Annotated,List
 from core import get_current_user,workspace_access
 from database import get_db
 from sqlalchemy.orm import Session
@@ -58,5 +58,8 @@ def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:Database
     db.refresh(db_masterpost)      
     return db_masterpost
 
-     
-    
+
+@router.get("/post_list",response_model=PostMasterResponse)
+def list_workspace_posts(workspace_id:int,db:DatabaseSession,memebership:access,skip:int=0,limit:int=10):
+    posts=db.query(PostMasterModel).filter(PostMasterModel.workspace_id==workspace_id).order_by(PostMasterModel.id.desc()).offset(skip).limit(limit).all()
+    return posts
