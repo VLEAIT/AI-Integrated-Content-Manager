@@ -32,7 +32,7 @@ def generate_ai_caption(masterpost_id:int):
 
    
 @router.post("/mega_submit",response_model=PostMasterResponse,status_code=status.HTTP_201_CREATED)
-def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:DatabaseSession,memebership:access,current_user:CurrentUser):
+def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:DatabaseSession,memebership:access,current_user:CurrentUser,backgroundtask:BackgroundTasks):
 
     master_data=payload.master.model_dump()
     master_data["ai_caption"]="Processing via AI"
@@ -41,7 +41,7 @@ def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:Database
     db.commit()
     db.refresh(db_masterpost)
 
-    BackgroundTasks.add_task(generate_ai_caption,db_masterpost.id)
+    backgroundtask.add_task(generate_ai_caption,db_masterpost.id)
 
 
     for platform in payload.target_platform:
@@ -55,8 +55,7 @@ def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:Database
         db.add(db_child)
 
     db.commit()  
-    db.refresh(db_masterpost)  
-
+    db.refresh(db_masterpost)      
     return db_masterpost
 
      
