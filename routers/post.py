@@ -1,6 +1,6 @@
 from fastapi import APIRouter,Depends,status,BackgroundTasks,HTTPException
 from models import PostChildModel,PostMasterModel
-from schemas import PostChildResponse,PostChildCreate,MegaPostSubmission,statu,PostMasterResponse,PostApproval
+from schemas import PostChildResponse,PostChildCreate,MegaPostSubmission,statu,PostMasterResponse,PostApproval,PostChildUpdate
 from typing import Annotated,List
 from core import get_current_user,workspace_access
 from database import get_db
@@ -75,4 +75,22 @@ def postapproval(workspace_id:int,child_id:int,payload:PostApproval,db:DatabaseS
     return {"message": f"Platform post updated to {payload.approval_status.value}"}
 
 
+
+@router.put("/child/{child_id}/content",status_code=status.HTTP_200_OK)
+def content_update(workspace_id:int,child_id:int,payload:PostChildUpdate,db:DatabaseSession,membership:access):
+    child_content=db.query(PostChildModel).join(PostMasterModel).filter(PostChildModel.id==child_id,PostMasterModel.workspace_id==workspace_id).first()
+
+    if not child_content:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="data not found")
+    
+    child_content.boost_budget=payload.boost_budget
+    child_content.scheduled_time=payload.scheduled_time
+    db.commit()
+
+    return {"message":"content child update succesfully"}
+
+
+
+
+    
 
