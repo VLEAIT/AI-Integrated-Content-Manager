@@ -1,6 +1,6 @@
 from fastapi import APIRouter,Depends,status,BackgroundTasks,HTTPException
 from models import PostChildModel,PostMasterModel
-from schemas import PostChildResponse,PostChildCreate,MegaPostSubmission,statu,PostMasterResponse,PostApproval,PostChildUpdate
+from schemas import PostChildResponse,PostChildCreate,MegaPostSubmission,statu,PostMasterResponse,PostApproval,PostChildUpdate,PostMasterUpdate
 from typing import Annotated,List
 from core import get_current_user,workspace_access
 from database import get_db
@@ -91,6 +91,31 @@ def content_update(workspace_id:int,child_id:int,payload:PostChildUpdate,db:Data
 
 
 
+@router.put("/master/{master_id}/content",status_code=status.HTTP_200_OK)
+def master_update(workspace_id:int,masterpost_id:int,payload:PostMasterUpdate,db:DatabaseSession,membership:access,backgroundtask:BackgroundTasks):
+    master_update=db.query(PostMasterModel).filter(PostMasterModel.id==masterpost_id,PostMasterModel.workspace_id==workspace_id).first()
+    if not master_update:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="data not found")
+    master_update.raw_description=payload.raw_description
+    master_update.ai_caption="AI is generating data"
 
-    
+    if payload.content_url:
+        master_update.content_url=payload.content_url
+        for child in master_update.children:
+            if not child.is_published:
+                pass
+    db.commit()
+    backgroundtask.add(generate_ai_caption(),master_update.id)
+    return {"message":"data updated in post master"}
+
+
+@router.delete("/{masterpost_id}",status_code=status.HTTP_403_FORBIDDEN)
+def delete_post(workspace_id:int,payload:PostChildUpdate,db:DatabaseSession,membrship:access,masterpost_id:int):
+    mega_post=db.query(PostMasterModel).filter(PostMasterModel.workspace_id==workspace_id,PostMasterModel.id==masterpost_id).first()
+    if not mega_post:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="data not found")
+    db.delete(mega_post)
+    db.commit()
+    return None
+
 
