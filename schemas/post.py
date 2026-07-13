@@ -29,6 +29,12 @@ class PostMasterResponse(PostMasterBase):
 
     model_config={"from_attributes":True}
 
+class PostMasterUpdate(BaseModel):
+    content_url:Optional[HttpUrl]=Field(... , description="claude storage link")
+    raw_description:Optional[str]=Field(...  ,description="the descirption of value")
+    ai_caption:Optional[str]=Field(... ,description="caption of ai")
+
+
 class PostChildBase(BaseModel):
     platform:platform_opt
 
@@ -49,7 +55,7 @@ class PostChildResponse(PostChildBase):
 class PostChildUpdate(BaseModel):
     boost_budget:Optional[float]=None
     scheduled_time:Optional[datetime]=None
-    
+
 
 
 
