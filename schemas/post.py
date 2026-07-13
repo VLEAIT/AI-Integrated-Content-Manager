@@ -46,10 +46,20 @@ class PostChildResponse(PostChildBase):
 
     model_config={"from_attributes":True}
 
+class PostChildUpdate(BaseModel):
+    boost_budget:Optional[float]=None
+    scheduled_time:Optional[datetime]=None
+    
+
+
 
 class MegaPostSubmission(BaseModel):
     master:PostMasterCreate
     target_platform:list[platform_opt]    
+
+
+class PostApproval(BaseModel):
+    approval_status:statu
 
 
   
