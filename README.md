@@ -29,24 +29,39 @@ To prevent data leakage when users collaborate across multiple organizations, th
 
 ---
 
-##  API Endpoint Layout
+## API Endpoint Layout
 
 ### 1. Authentication Router (`/auth`)
 * Enforces strict cryptographic validation using modern `Annotated` dependency injection patterns.
 
 | HTTP Method | API Route | Access Level | Operational Mechanics |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/auth/register` | Public | Validates distinct email criteria, hashes plaintext credentials, and returns user frames. |
-| `POST` | `/auth/login` | Public | Validates user signatures against backend hashes, returning a bearer JWT token payload. |
+| `POST` | `/auth/register` | Public | Validates distinct email criteria, hashes plaintext credentials, and creates a new user record. |
+| `POST` | `/auth/login` | Public | Validates user credentials against stored hashes and returns a bearer JWT token payload. |
 | `PATCH` | `/auth/update` | Authenticated | Executes selective partial updates on fields like non-colliding custom usernames. |
-| `PATCH` | `/auth/password_change` | Authenticated | Mandates an active identity password challenge prior to rewriting the secure hash; blocks third-party SSO accounts lacking local secrets. |
+| `PATCH` | `/auth/password_change` | Authenticated | Mandates an active identity password challenge prior to rewriting the secure hash. |
 
 ### 2. Workspace Router (`/workspace`)
-* Implements an **Atomic Dual-Write Transaction Sequence** to guarantee referential integrity and eliminate orphan workspace containers.
+* Manages workspace creation and workspace visibility for the authenticated user.
 
 | HTTP Method | API Route | Access Level | Operational Mechanics |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/workspace/create` | Global Owner | Assesses owner tier privileges, runs an implicit multi-tenant `AND` query logic check on name collisions, commits the workspace row, and instantly binds the creator as local `owner` in the allocation table. |
+| `POST` | `/workspace/create` | Global Owner | Assesses owner-tier privileges, creates the workspace row, and instantly links the creator as a workspace owner in the allocation table. |
+| `GET` | `/workspace/my_workspace` | Authenticated | Returns the list of workspaces associated with the current user. |
+
+### 3. Posts Router (`/workspace/{workspace_id}/post`)
+* Supports workspace-scoped post submission, review, and content updates with AI-assisted caption generation.
+
+| HTTP Method | API Route | Access Level | Operational Mechanics |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/workspace/{workspace_id}/post/mega_submit` | Authenticated + Workspace Access | Creates a master post and child posts for each selected platform, sets an initial AI caption status, and queues a background task to generate the final AI caption from the raw description. |
+| `GET` | `/workspace/{workspace_id}/post/post_list` | Authenticated + Workspace Access | Lists posts for a workspace with pagination using the query parameters `skip` and `limit` (defaults: `skip=0`, `limit=10`). |
+| `PATCH` | `/workspace/{workspace_id}/post/child/{child_id}/approval` | Authenticated + Workspace Access | Updates the approval state of a child post. |
+| `PUT` | `/workspace/{workspace_id}/post/child/{child_id}/content` | Authenticated + Workspace Access | Updates child-post content values such as boost budget and scheduled time. |
+| `PUT` | `/workspace/{workspace_id}/post/master/{master_id}/content` | Authenticated + Workspace Access | Updates the master post content and triggers AI caption regeneration. |
+| `DELETE` | `/workspace/{workspace_id}/post/{masterpost_id}` | Authenticated + Workspace Access | Deletes a master post from the workspace. |
+
+> Background AI caption behavior: during `mega_submit`, the system stores an initial caption of `Processing via AI` and then runs a background task to replace it with generated text based on the post description.
 
 ---
 
@@ -110,4 +125,4 @@ Lifecycle Initialization Locks: Configured unified startup application hooks ins
 
 Production-Grade Localized RBAC: Enhanced the Workspacealloc bridge table to include an explicit allocated_role structural column, laying the foundation for localized workspace security scopes and team collaboration pipelines.
 
-Atomic Dual-Write Router Persistence: Engineered the core /workspace/create endpoint utilizing sequential transactional steps to guarantee that a workspace creator is instantly linked to their new container, preventing orphan database rows.
+Workspace and Post Management Flows: Expanded the API with workspace creation and listing endpoints, along with post submission, approval handling, and content update workflows that support AI caption generation in the background.
