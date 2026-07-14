@@ -22,7 +22,7 @@ def call_claude_api(prompt:str)->str:
     return f"Ai is generating idea"
 
 def generate_ai_caption(masterpost_id:int):
-    db=next(get_db)
+    db=next(get_db())
     post=db.query(PostMasterModel).filter(PostMasterModel.id==masterpost_id).first()
     if post:
         ai_text=call_claude_api(prompt=post.raw_description)
@@ -59,7 +59,7 @@ def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:Database
     return db_masterpost
 
 
-@router.get("/post_list",response_model=PostMasterResponse)
+@router.get("/post_list",response_model=List[PostMasterResponse])
 def list_workspace_posts(workspace_id:int,db:DatabaseSession,memebership:access,skip:int=0,limit:int=10):
     posts=db.query(PostMasterModel).filter(PostMasterModel.workspace_id==workspace_id).order_by(PostMasterModel.id.desc()).offset(skip).limit(limit).all()
     return posts
@@ -67,7 +67,7 @@ def list_workspace_posts(workspace_id:int,db:DatabaseSession,memebership:access,
 
 @router.patch("/child/{child_id}/approval", status_code=status.HTTP_200_OK)
 def postapproval(workspace_id:int,child_id:int,payload:PostApproval,db:DatabaseSession,membership:access):
-    child_post=db.query(PostChildModel).join(PostMasterModel).filter(PostChildModel.id==child_id,PostMasterModel.id==workspace_id).first()
+    child_post=db.query(PostChildModel).join(PostMasterModel).filter(PostChildModel.id==child_id,PostMasterModel.workspace_id==workspace_id).first()
     if not child_post:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Platform id idnot match ")
     child_post.approval_status=payload.approval_status
@@ -91,7 +91,7 @@ def content_update(workspace_id:int,child_id:int,payload:PostChildUpdate,db:Data
 
 
 
-@router.put("/master/{master_id}/content",status_code=status.HTTP_200_OK)
+@router.put("/master/{masterpost_id}/content",status_code=status.HTTP_200_OK)
 def master_update(workspace_id:int,masterpost_id:int,payload:PostMasterUpdate,db:DatabaseSession,membership:access,backgroundtask:BackgroundTasks):
     master_update=db.query(PostMasterModel).filter(PostMasterModel.id==masterpost_id,PostMasterModel.workspace_id==workspace_id).first()
     if not master_update:
@@ -105,7 +105,7 @@ def master_update(workspace_id:int,masterpost_id:int,payload:PostMasterUpdate,db
             if not child.is_published:
                 pass
     db.commit()
-    backgroundtask.add(generate_ai_caption(),master_update.id)
+    backgroundtask.add_task(generate_ai_caption(),master_update.id)
     return {"message":"data updated in post master"}
 
 
