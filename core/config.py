@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings,SettingsConfigDict
-from pydantic import AnyHttpUrl,field_validator,Field
+from pydantic import field_validator,Field
 from typing import List,Union
 
 
@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     version:str="v1.0"
     ai_v1_str:str="/api/v1"
 
-    allowed_origins:List[AnyHttpUrl]=Field(... ,validation_alias="ALLOWED_ORIGINS")
+    allowed_origins:List[str]=Field(... ,validation_alias="ALLOWED_ORIGINS")
     anthropic_api_key:str=Field(... , validation_alias="ANTHROPIC_API_KEY")
 
     database_url:str=Field(... , validation_alias="DATABASE_URL")
@@ -19,11 +19,21 @@ class Settings(BaseSettings):
     @classmethod
     def validation_origin(cls,value:Union[str,List[str]])->List[str]:
         if isinstance(value,list):
-            return value
+            return [str(item).rstrip("/") for item in value]
         if isinstance(value,str):
-            if value.startswith("[") and value.endswith("]"):
-                return[item.strip("'/") for item in value[1:-1].split(",")]
-            return[value.strip()]
+           cleaned=value.strip()
+           if cleaned.startswith("[") and cleaned.endswith("]"):
+               cleaned =cleaned[1:-1]
+           origins=[
+                item.strip("'\"").rstrip("/")
+                for item in cleaned.strip(",")
+                if item.strip()
+            ]   
+           for origin in origins:
+               if not origin.startswith("http://","https://"):
+                   raise ValueError(f"Origin '{origin}' must start with https// or https://")
+           return origins
+           
         raise ValueError("data inserted is invalid")
     
     model_config=SettingsConfigDict(
