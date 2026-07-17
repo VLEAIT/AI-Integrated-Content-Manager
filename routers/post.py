@@ -1,11 +1,12 @@
 from fastapi import APIRouter,Depends,status,BackgroundTasks,HTTPException
 from models import PostChildModel,PostMasterModel
-from schemas import PostChildResponse,PostChildCreate,MegaPostSubmission,statu,PostMasterResponse,PostApproval,PostChildUpdate,PostMasterUpdate
+from schemas import MegaPostSubmission,statu,PostMasterResponse,PostApproval,PostChildUpdate,PostMasterUpdate
 from typing import Annotated,List
 from core import get_current_user,workspace_access
 from database import get_db
 from sqlalchemy.orm import Session
 from models import User,Workspacealloc
+from services import ai_gateway
 
 
 
@@ -18,14 +19,12 @@ DatabaseSession=Annotated[Session,Depends(get_db)]
 CurrentUser=Annotated[User,Depends(get_current_user)]
 access=Annotated[Workspacealloc,Depends(workspace_access)]
 
-def call_claude_api(prompt:str)->str:
-    return f"Ai is generating idea"
 
 def generate_ai_caption(masterpost_id:int):
     db=next(get_db())
     post=db.query(PostMasterModel).filter(PostMasterModel.id==masterpost_id).first()
     if post:
-        ai_text=call_claude_api(prompt=post.raw_description)
+        ai_text=ai_gateway.generate_social_caption(prompt=post.raw_description)
         post.ai_caption=ai_text
         db.commit()
     
