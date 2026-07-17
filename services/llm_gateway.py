@@ -7,8 +7,14 @@ class LLMGateway:
     def __init__(self):
         self.provider ="claude"
 
+        self.failure_count=0
+        self.circuit_open_until=0.0
+        self.max_failures=5
+        self.cooldown_period=60
+        
+
         try:
-            self.client=Anthropic(api_key=settings.anthropic_api_key)
+            self.client=Anthropic(api_key=settings.anthropic_api_key,timeout=8.0)
         except Exception as e:
             print(f"Gateway Intilization Error:{e}")
             self.client=None
