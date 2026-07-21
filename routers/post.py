@@ -5,8 +5,8 @@ from typing import Annotated,List
 from core import get_current_user,workspace_access
 from database import get_db
 from sqlalchemy.orm import Session
-from models import User,Workspacealloc
-from services import ai_gateway
+from models import User,Workspacealloc,AIstatus
+from services import ai_gateway,process_master_post_caption
 
 
 
@@ -18,29 +18,19 @@ router=APIRouter(
 DatabaseSession=Annotated[Session,Depends(get_db)]
 CurrentUser=Annotated[User,Depends(get_current_user)]
 access=Annotated[Workspacealloc,Depends(workspace_access)]
-
-
-def generate_ai_caption(masterpost_id:int):
-    db=next(get_db())
-    post=db.query(PostMasterModel).filter(PostMasterModel.id==masterpost_id).first()
-    if post:
-        ai_text=ai_gateway.generate_social_caption(prompt=post.raw_description)
-        post.ai_caption=ai_text
-        db.commit()
     
 
-   
 @router.post("/mega_submit",response_model=PostMasterResponse,status_code=status.HTTP_201_CREATED)
 def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:DatabaseSession,memebership:access,current_user:CurrentUser,backgroundtask:BackgroundTasks):
 
     master_data=payload.master.model_dump()
     master_data["ai_caption"]="Processing via AI"
-    db_masterpost=PostMasterModel(**master_data,workspace_id=Workspace_id,creator_id=current_user.id)
+    db_masterpost=PostMasterModel(**master_data,workspace_id=Workspace_id,creator_id=current_user.id,caption_ai_status=AIstatus.QUEUED)
     db.add(db_masterpost)
     db.commit()
     db.refresh(db_masterpost)
 
-    backgroundtask.add_task(generate_ai_caption,db_masterpost.id)
+    backgroundtask.add_task(process_master_post_caption,db_masterpost.id)
 
 
     for platform in payload.target_platform:
@@ -104,7 +94,7 @@ def master_update(workspace_id:int,masterpost_id:int,payload:PostMasterUpdate,db
             if not child.is_published:
                 pass
     db.commit()
-    backgroundtask.add_task(generate_ai_caption(),master_update.id)
+    backgroundtask.add_task(process_master_post_caption(),master_update.id)
     return {"message":"data updated in post master"}
 
 
