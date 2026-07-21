@@ -1,13 +1,13 @@
 from core import settings
 import os
-from anthropic import Anthropic,APITimeoutError,APIStatusError
+from openai import OpenAI,APITimeoutError,APIStatusError
 import time
 
 
 class LLMGateway:
 
     def __init__(self):
-        self.provider ="claude"
+        self.provider ="grok"
 
         self.failure_count=0
         self.circuit_open_until=0.0
@@ -16,7 +16,7 @@ class LLMGateway:
         
 
         try:
-            self.client=Anthropic(api_key=settings.anthropic_api_key,timeout=8.0)
+            self.client=OpenAI(api_key=settings.grok_api_key,timeout=8.0)
         except Exception as e:
             print(f"Gateway Intilization Error:{e}")
             self.client=None
@@ -30,9 +30,9 @@ class LLMGateway:
             print(f"Circuit is open .blocking calls for {remaining_seconds}")
             return " ai is generating"
         if  self.provider == "claude":
-            return self._call_claude_with_retry(raw_description)
+            return self._call_grok_with_retry(raw_description)
         
-    def _call_claude_with_retry(self,prompt:str)->str:
+    def _call_grok_with_retry(self,prompt:str)->str:
         system_instruction=(
                 "You are an expert social media copywriter and growth marketer."
                 " Your task is to generate high-converting, platform-optimized captions for marketing posts and short-form video reels based on the user's provided context, images, or raw transcripts."
@@ -41,18 +41,20 @@ class LLMGateway:
         base_delay=1.0
         for attempt in range(max_retries):  
             try:
-                response=self.client.messages.create(
-                    model="claude-3-5-sonnet-20241022",
+                response=self.client.chat.completions.create(
+                    model="grok-beta",
                     max_tokens=1000,
                     temperature=0.7,
-                    system=system_instruction,
-                    messages=[{"role":"user","content":f"Create a master caption for this:\n{prompt}"}]
+                    messages=[
+                        {"role":"system","content":system_instruction},
+                        {"role":"user","content":f"Create a master caption for this:\n{prompt}"}
+                        ]
                 )  
                 self.failure_count=0
                 self.circuit_open_until=0.0
-                return response.content[0].text.strip()
+                return response.choices[0].text.strip()
             except APITimeoutError:
-                print(f"claude took more than 8s on attempt{attempt + 1}/{max_retries}")
+                print(f"AI took more than 8s on attempt{attempt + 1}/{max_retries}")
             except APIStatusError as e:
                 print(f"Upstream returned status code {e.status_code} on {attempt + 1}")
             except Exception as e:
