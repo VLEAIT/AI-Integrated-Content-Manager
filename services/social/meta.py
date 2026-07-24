@@ -29,6 +29,7 @@ class MetaPublisher(BaseSocialPublisher):
                 f"{self.BASE_URL}/{ig_account_id}/media_publish",
                 data={"creation_id":container_id,"access_token":access_token}
             )
-            pub_res =await client.post()
+            pub_res =await client.post() 
             return {"platform_post_id":pub_res.json()["id"],"status":"PUBLISHED"}
+        
         
