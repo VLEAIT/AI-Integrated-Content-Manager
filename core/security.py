@@ -10,6 +10,7 @@ from database import get_db
 from models.user import User
 from schemas import Role_type
 from models import Workspacealloc
+from cryptography.fernet import Fernet
 
 
 
@@ -23,6 +24,18 @@ pwd_context=CryptContext(
 SECRET_KEY=os.getenv("SECRET_KEY")
 ALGORITHM="HS256"
 TOKEN_EXPIRE_MINUTES=30
+ENCRYPTION_KEY=os.getenv("ENCRYPTION_KEY")
+
+def encrypt_token(token:str)->str:
+    if not ENCRYPTION_KEY:
+        raise RuntimeError("Encryption key not found")
+    f=Fernet(ENCRYPTION_KEY.encode())
+    return f.encrypt(token.encode()).decode()
+def decrpted_toekn(encrypted_token:str)->str:
+    if not ENCRYPTION_KEY:
+        raise RuntimeError("ENCRYPTION_KEY not found")
+    f=Fernet(ENCRYPTION_KEY.encode())
+    return f.decrypt(encrypt_token.encode()).decode()
 
 def hashed_passowrd(password:str):
     return pwd_context.hash(password)
