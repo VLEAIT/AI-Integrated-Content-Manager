@@ -40,6 +40,7 @@ class PostChildModel(Base,TimestampMixin):
     approval_status:Mapped[statu]=mapped_column(SQLEnum(statu),nullable=False)
     is_published:Mapped[bool]=mapped_column(default=False, nullable=False)
     boost_budget:Mapped[float]=mapped_column(default=0.0,nullable=False)
+    social_account_id:Mapped[int]=mapped_column(ForeignKey("social_accounts.id",ondelete="CASCADE"),nullable=False)
     scheduled_time:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=None)
     published_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=None)
 
