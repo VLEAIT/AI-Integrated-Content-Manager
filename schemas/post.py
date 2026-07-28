@@ -39,7 +39,8 @@ class PostChildBase(BaseModel):
     platform:platform_opt
 
 class PostChildCreate(PostChildBase):
-    scheduled_time:Optional[datetime]=None    
+    social_account_id:int
+    scheduled_time:Optional[datetime]=None 
 
 class PostChildResponse(PostChildBase):
     id:int
@@ -61,7 +62,7 @@ class PostChildUpdate(BaseModel):
 
 class MegaPostSubmission(BaseModel):
     master:PostMasterCreate
-    target_platform:list[platform_opt]    
+    target_platform:list[PostChildCreate]    
 
 
 class PostApproval(BaseModel):
