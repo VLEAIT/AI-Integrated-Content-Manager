@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     database_url:str=Field(... , validation_alias="DATABASE_URL")
     secret_key:str=Field(... ,validation_alias="SECRET_KEY")
     production:bool=False
+    is_dev_mode:bool=True
 
     @field_validator("allowed_origins",mode="before")
     @classmethod
