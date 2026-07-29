@@ -7,6 +7,10 @@ from database import get_db
 from sqlalchemy.orm import Session
 from models import User,Workspacealloc,AIstatus
 from services import ai_gateway,process_master_post_caption
+from models import SocialAccount
+from services.social.dispatcher import SocialDispatcher
+from core import encrypt_token,decrpted_toekn,settings
+
 
 
 
@@ -21,31 +25,58 @@ access=Annotated[Workspacealloc,Depends(workspace_access)]
     
 
 @router.post("/mega_submit",response_model=PostMasterResponse,status_code=status.HTTP_201_CREATED)
-def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:DatabaseSession,memebership:access,current_user:CurrentUser,backgroundtask:BackgroundTasks):
+async def mega_post_submission(Workspace_id:int,payload:MegaPostSubmission,db:DatabaseSession,memebership:access,current_user:CurrentUser,backgroundtask:BackgroundTasks):
+    try:
+        master_data=payload.model_dump()
+        master_data["ai_caption"]="Processing via AI"
 
-    master_data=payload.master.model_dump()
-    master_data["ai_caption"]="Processing via AI"
-    db_masterpost=PostMasterModel(**master_data,workspace_id=Workspace_id,creator_id=current_user.id,caption_ai_status=AIstatus.QUEUED)
-    db.add(db_masterpost)
-    db.commit()
-    db.refresh(db_masterpost)
+        db_masterpost=PostMasterModel(
+            **master_data,
+            workspace_id=Workspace_id,
+            creator_id=current_user.id,
+            caption_ai_status=AIstatus.QUEUED,
+            )
+        db.add(db_masterpost)
+        db.flush()
 
-    backgroundtask.add_task(process_master_post_caption,db_masterpost.id)
+        backgroundtask.add_task(process_master_post_caption,db_masterpost.id)
+
+        for target in payload.target_platform:
+            account=(
+                db.query(SocialAccount).filter(SocialAccount.id == target.social_account_id,SocialAccount.workspace_id==Workspace_id).first()
+
+            )
+            if not account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Social Account ID{target.social_account_id} not found in workspace",
+                )
+            access_token=decrpted_toekn(account.encrypted_token)
+            publisher=SocialDispatcher.get_publisher(
+                platform=target.platform,
+                is_dev_mode=settings.is_dev_mode
+            )
+            result=await publisher.publish(
+                access_token=access_token,
+                caption=db_masterpost.raw_description,
+                media_url=db_masterpost.content_url,
+                acccount_id=account.platform_account_id
+            )
+            is_pub=result.get("status")="PUBLISHED"
+
+            db_child=PostChildModel(
+                masterpost_id=db_masterpost.id,
+                social_account_id=account.id,
+                platform=target.platform,
+
+            )
+            
 
 
-    for platform in payload.target_platform:
-        db_child=PostChildModel(
-            masterpost_id=db_masterpost.id, 
-            platform =platform,
-            approval_status=statu.pending,
-            is_published=False,
-            boost_budget=0.0
-        )
-        db.add(db_child)
 
-    db.commit()  
-    db.refresh(db_masterpost)      
-    return db_masterpost
+
+
+
 
 
 @router.get("/post_list",response_model=List[PostMasterResponse])
