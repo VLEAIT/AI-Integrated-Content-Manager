@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine,Column,DateTime
-from sqlalchemy.orm  import sessionmaker,DeclarativeBase,Mapped,mapped_column
+from sqlalchemy.orm  import sessionmaker,DeclarativeBase,Mapped,mapped_column,MappedAsDataclass
 from dotenv import load_dotenv
 from datetime import datetime
 from sqlalchemy.sql import func
@@ -28,7 +28,7 @@ class TimestampMixin:
     updated_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now(),nullable=False)
     
 
-class Base(DeclarativeBase):
+class Base(MappedAsDataclass,DeclarativeBase):
     pass
 
 def get_db():
