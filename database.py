@@ -28,7 +28,7 @@ class TimestampMixin:
     updated_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now(),nullable=False)
     
 
-class Base(MappedAsDataclass,DeclarativeBase):
+class Base(MappedAsDataclass,DeclarativeBase,kw_only=True):
     pass
 
 def get_db():
